@@ -31,13 +31,14 @@ git clone https://github.com/tmux-plugins/tmux-logging ~/.tmux/plugins/tmux-logg
 ```
 ## Reload tmux config
 
-Then, Press prefix (CTRL + A) + I (capital i, as in Install) to fetch the plugin
-
-`PREFIX` + `I`
-
 Inside **active** tmux session:
 
 ```
 source ~/.tmux.conf
 ```
+
+Then, Press prefix (CTRL + A) + I (capital i, as in Install) to fetch the TPM plugin
+
+`PREFIX` + `I`
+
 
