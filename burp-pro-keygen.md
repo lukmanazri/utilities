@@ -1,4 +1,4 @@
-## Burpro Key Generator
+## Burpsuite Pro License Key Generator
 
 Credit:
 https://github.com/xiv3r/Burpsuite-Professional
