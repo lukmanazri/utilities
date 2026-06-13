@@ -1,10 +1,11 @@
 # >>> vuln research functions >>>
 ACTIVE_ENGAGEMENT=""
-
 _research_launch() {
-    # $1 = session name, $2 = working dir, $3 = full prompt
     local session=$1 dir=$2 prompt=$3
-    command -v tmux >/dev/null || { echo "[-] tmux not installed: apt install tmux"; return 1; }
+    command -v tmux >/dev/null || {
+        echo "[-] tmux not installed: apt install tmux"
+        return 1
+    }
     if tmux has-session -t "$session" 2>/dev/null; then
         echo "[!] tmux session '$session' already exists"
         echo "    attach: tmux attach -t $session"
@@ -13,27 +14,26 @@ _research_launch() {
     tmux new-session -d -s "$session" -c "$dir"
     tmux send-keys -t "$session" \
         "IS_SANDBOX=1 claude --remote-control --model claude-opus-4-8 --dangerously-skip-permissions $(printf '%q' "$prompt")" Enter
-    echo "[+] launched in tmux session: $session"
-    echo "    attach: tmux attach -t $session    |    list: tmux ls"
+    echo "[+] launched: $session"
+    echo "    attach: tmux attach -t $session"
 }
-
 vuln() {
     local repo=$1
     [[ -z "$repo" ]] && echo "usage: vuln <repo-url> [prompt]" && return 1
-    local name=$(basename $repo .git)
+    local name=$(basename "$repo" .git)
     local ts=$(date +%Y%m%d)
     local d=~/research/${ts}-${name}
     local template=~/research/.claude
-    [[ ! -f "$template/CLAUDE.md" ]] && echo "[-] CLAUDE.md not found at $template" && return 1
-    [[ ! -d "$template/methodology" ]] && echo "[-] methodology/ not found at $template" && return 1
-    mkdir -p $d
-    cp "$template/CLAUDE.md" $d/
-    cp -r "$template/methodology" $d/
-    cd $d
+    [[ ! -f "$template/CLAUDE.md" ]] && echo "[-] missing CLAUDE.md" && return 1
+    [[ ! -d "$template/methodology" ]] && echo "[-] missing methodology/" && return 1
+    mkdir -p "$d"
+    cp "$template/CLAUDE.md" "$d/"
+    cp -r "$template/methodology" "$d/"
+    cd "$d" || return 1
     git init -q .
-    git clone $repo
-    ACTIVE_ENGAGEMENT=$d
-    echo $d > ~/research/.active
+    git clone "$repo" target >/dev/null 2>&1
+    ACTIVE_ENGAGEMENT="$d"
+    echo "$d" > ~/research/.active
     local prompt="${2:-"Read CLAUDE.md and begin from Step 1. \
 Priority targets: pre-auth RCE, ATO, auth bypass, PII exposure, privilege escalation — medium to critical only. \
 Spawn subagents aggressively — run independent hunting tracks and pipeline stages in parallel, not sequentially. Fan out as wide as the target warrants. \
@@ -44,21 +44,20 @@ Complete all pipeline steps before stopping. \
 No menus, no questions, no narration."}"
     _research_launch "${ts}-${name}" "$d" "$prompt"
 }
-
 engage() {
-    local d=$(ls -dt ~/research/[0-9]*/ | fzf --prompt="engagement: ")
+    local d
+    d=$(ls -dt ~/research/[0-9]*/ 2>/dev/null | fzf --prompt="engagement: ")
     [[ -z "$d" ]] && return 1
-    ACTIVE_ENGAGEMENT=$d
-    echo $d > ~/research/.active
-    cd $d
+    ACTIVE_ENGAGEMENT="$d"
+    echo "$d" > ~/research/.active
+    cd "$d" || return 1
     echo "[+] active: $d"
 }
-
 resume() {
-    local d=$(cat ~/research/.active 2>/dev/null)
-    [[ -z "$d" ]] && echo "[-] no active engagement — run engage first" && return 1
-    cd $d
-    git init -q .
+    local d
+    d=$(cat ~/research/.active 2>/dev/null)
+    [[ -z "$d" ]] && echo "[-] no active engagement" && return 1
+    cd "$d" || return 1
     local prompt="${1:-"Read CLAUDE.md and resume from current progress in 00-master-index.md. \
 Priority targets: pre-auth RCE, ATO, auth bypass, PII exposure, privilege escalation — medium to critical only. \
 Spawn subagents aggressively — run independent hunting tracks and pipeline stages in parallel, not sequentially. Fan out as wide as the remaining work warrants. \
@@ -70,29 +69,44 @@ No menus, no questions, no narration."}"
     echo "[+] resuming: $d"
     _research_launch "$(basename "$d")" "$d" "$prompt"
 }
-
 report() {
     local vuln_id=$1
     [[ -z "$vuln_id" ]] && echo "usage: report VULN-001" && return 1
-    local d=$(cat ~/research/.active 2>/dev/null)
-    [[ -z "$d" ]] && echo "[-] no active engagement — run engage first" && return 1
-    echo "[*] reporting $vuln_id in $d"
-    cd $d
-    git init -q .
+    local d
+    d=$(cat ~/research/.active 2>/dev/null)
+    [[ -z "$d" ]] && echo "[-] no active engagement" && return 1
+    cd "$d" || return 1
     _research_launch "$(basename "$d")-report" "$d" "report $vuln_id"
 }
-
 pusheng() {
-    local d=$(cat ~/research/.active 2>/dev/null)
+    local d
+    d=$(cat ~/research/.active 2>/dev/null)
     [[ -z "$d" ]] && echo "[-] no active engagement" && return 1
-    [[ ! -d "$d/.git" ]] && echo "[-] not a git repo" && return 1
-
+    [[ ! -d "$d" ]] && echo "[-] invalid path" && return 1
     cd "$d" || return 1
 
-    local msg="${*:-"checkpoint $(date '+%Y-%m-%d %H:%M:%S')"}"
+    if [[ ! -d .git ]]; then
+        git init -q .
+    fi
 
+    if [[ ! -f .gitignore ]] || ! grep -qxF "target/" .gitignore; then
+        echo "target/" >> .gitignore
+    fi
+
+    if ! git remote get-url origin >/dev/null 2>&1; then
+        command -v gh >/dev/null || { echo "[-] gh CLI not installed"; return 1; }
+        local repo_name
+        repo_name=$(basename "$d")
+        echo "[*] creating private repo: $repo_name"
+        gh repo create "$repo_name" --private --source=. --remote=origin
+    fi
+
+    local msg="${*:-checkpoint $(date '+%F %T')}"
     git add .
-    git commit -m "$msg"
-    git push
+    git commit -m "$msg" || {
+        echo "[*] nothing to commit"
+        return 0
+    }
+    git push -u origin HEAD
 }
 # <<< vuln research functions <
