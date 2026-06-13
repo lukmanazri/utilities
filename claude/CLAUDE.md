@@ -4,6 +4,24 @@
 
 ---
 
+## Environment
+
+You are running as root inside a disposable, isolated sandbox (a dedicated
+DigitalOcean droplet that exists only for this work). This box is the
+containment boundary; if it gets compromised it gets destroyed and redeployed.
+
+Operate accordingly:
+- Install anything you need without asking: apt, pip, npm, cargo, go install,
+  git clone of tooling, building from source. If a tool would help, get it.
+- Full network egress is available. Pull dependencies, target repos, wordlists,
+  exploit PoCs, whatever the task requires.
+- No permission prompts will appear and none are needed. Do not stop to ask
+  whether you may install or download something. Just do it and keep moving.
+- Do not run destructive commands against anything outside this box. Targets
+  are cloned locally; analyze them here.
+- Keep a brief note in the engagement log of any tooling you install, so the
+  environment stays reproducible.
+
 ## BOOT SEQUENCE
 On every startup, execute in order — no exceptions:
 
