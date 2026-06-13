@@ -83,30 +83,38 @@ pusheng() {
     d=$(cat ~/research/.active 2>/dev/null)
     [[ -z "$d" ]] && echo "[-] no active engagement" && return 1
     [[ ! -d "$d" ]] && echo "[-] invalid path" && return 1
-    cd "$d" || return 1
 
-    if [[ ! -d .git ]]; then
+    local umbrella=~/research/.private-research
+    local name=$(basename "$d")
+
+    # ensure umbrella repo exists locally
+    if [[ ! -d "$umbrella/.git" ]]; then
+        mkdir -p "$umbrella"
+        cd "$umbrella" || return 1
         git init -q .
+        echo "target/" > .gitignore
+        echo "*/target/" >> .gitignore
+        git add .gitignore
+        git commit -q -m "init"
+        if ! git remote get-url origin >/dev/null 2>&1; then
+            command -v gh >/dev/null || { echo "[-] gh CLI not installed"; return 1; }
+            echo "[*] creating private repo: private-research"
+            gh repo create private-research --private --source=. --remote=origin
+        fi
+        git push -u origin HEAD
     fi
 
-    if [[ ! -f .gitignore ]] || ! grep -qxF "target/" .gitignore; then
-        echo "target/" >> .gitignore
-    fi
+    # sync this engagement's files (excluding target/) into umbrella/<name>/
+    mkdir -p "$umbrella/$name"
+    rsync -a --delete --exclude='target/' --exclude='.git/' "$d/" "$umbrella/$name/"
 
-    if ! git remote get-url origin >/dev/null 2>&1; then
-        command -v gh >/dev/null || { echo "[-] gh CLI not installed"; return 1; }
-        local repo_name
-        repo_name=$(basename "$d")
-        echo "[*] creating private repo: $repo_name"
-        gh repo create "$repo_name" --private --source=. --remote=origin
-    fi
-
-    local msg="${*:-checkpoint $(date '+%F %T')}"
+    cd "$umbrella" || return 1
+    local msg="${*:-checkpoint $(date '+%Y-%m-%d %H:%M:%S %Z') — $name}"
     git add .
     git commit -m "$msg" || {
         echo "[*] nothing to commit"
         return 0
     }
-    git push -u origin HEAD
+    git push
 }
 # <<< vuln research functions <
