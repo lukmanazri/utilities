@@ -25,7 +25,7 @@ Check all findings against latest upstream — skip anything already patched. \
 Do chain analysis on every confirmed finding. \
 Complete all pipeline steps before stopping. \
 No menus, no questions, no narration."}"
-    IS_SANDBOX=1 claude --model claude-opus-4-8 --dangerously-skip-permissions "$prompt"
+    IS_SANDBOX=1 claude --remote-control --model claude-opus-4-8 --dangerously-skip-permissions "$prompt"
 }
 engage() {
     local d=$(ls -dt ~/research/[0-9]*/ | fzf --prompt="engagement: ")
@@ -49,7 +49,7 @@ Do chain analysis on every confirmed finding. \
 Continue until all pipeline steps are complete. \
 No menus, no questions, no narration."}"
     echo "[+] resuming: $d"
-    IS_SANDBOX=1 claude --model claude-opus-4-8 --dangerously-skip-permissions "$prompt"
+    IS_SANDBOX=1 claude --remote-control --model claude-opus-4-8 --dangerously-skip-permissions "$prompt"
 }
 report() {
     local vuln_id=$1
@@ -59,6 +59,6 @@ report() {
     echo "[*] reporting $vuln_id in $d"
     cd $d
     git init -q .
-    IS_SANDBOX=1 claude --model claude-opus-4-8 --dangerously-skip-permissions "report $vuln_id"
+    IS_SANDBOX=1 claude --remote-control --model claude-opus-4-8 --dangerously-skip-permissions "report $vuln_id"
 }
 # <<< vuln research functions <
