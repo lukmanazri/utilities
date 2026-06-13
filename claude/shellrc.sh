@@ -13,6 +13,7 @@ vuln() {
     cp "$template/CLAUDE.md" $d/
     cp -r "$template/methodology" $d/
     cd $d
+    git init -q .
     git clone $repo
     ACTIVE_ENGAGEMENT=$d
     echo $d > ~/research/.active
@@ -24,8 +25,7 @@ Check all findings against latest upstream — skip anything already patched. \
 Do chain analysis on every confirmed finding. \
 Complete all pipeline steps before stopping. \
 No menus, no questions, no narration."}"
-    echo "/remote-control
-$prompt" | IS_SANDBOX=1 claude --model claude-opus-4-8 --dangerously-skip-permissions
+    IS_SANDBOX=1 claude --model claude-opus-4-8 --dangerously-skip-permissions "$prompt"
 }
 engage() {
     local d=$(ls -dt ~/research/[0-9]*/ | fzf --prompt="engagement: ")
@@ -39,6 +39,7 @@ resume() {
     local d=$(cat ~/research/.active 2>/dev/null)
     [[ -z "$d" ]] && echo "[-] no active engagement — run engage first" && return 1
     cd $d
+    git init -q .
     local prompt="${1:-"Read CLAUDE.md and resume from current progress in 00-master-index.md. \
 Priority targets: pre-auth RCE, ATO, auth bypass, PII exposure, privilege escalation — medium to critical only. \
 Spawn subagents aggressively — run independent hunting tracks and pipeline stages in parallel, not sequentially. Fan out as wide as the remaining work warrants. \
@@ -48,8 +49,7 @@ Do chain analysis on every confirmed finding. \
 Continue until all pipeline steps are complete. \
 No menus, no questions, no narration."}"
     echo "[+] resuming: $d"
-    echo "/remote-control
-$prompt" | IS_SANDBOX=1 claude --model claude-opus-4-8 --dangerously-skip-permissions
+    IS_SANDBOX=1 claude --model claude-opus-4-8 --dangerously-skip-permissions "$prompt"
 }
 report() {
     local vuln_id=$1
@@ -58,7 +58,7 @@ report() {
     [[ -z "$d" ]] && echo "[-] no active engagement — run engage first" && return 1
     echo "[*] reporting $vuln_id in $d"
     cd $d
-    echo "/remote-control
-report $vuln_id" | IS_SANDBOX=1 claude --model claude-opus-4-8 --dangerously-skip-permissions
+    git init -q .
+    IS_SANDBOX=1 claude --model claude-opus-4-8 --dangerously-skip-permissions "report $vuln_id"
 }
 # <<< vuln research functions <
