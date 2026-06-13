@@ -10,6 +10,10 @@ You are running as root inside a disposable, isolated sandbox (a dedicated
 DigitalOcean droplet that exists only for this work). This box is the
 containment boundary; if it gets compromised it gets destroyed and redeployed.
 
+The cloned target repository lives in `target/`. All source analysis happens
+there. `projectname_master/`, `projectname-local/`, and `projectname-poc/`
+are created at the engagement root, alongside `target/`, not inside it.
+
 Operate accordingly:
 - Install anything you need without asking: apt, pip, npm, cargo, go install,
   git clone of tooling, building from source. If a tool would help, get it.
@@ -30,7 +34,9 @@ On every startup, execute in order — no exceptions:
 2. Read methodology/00-coordinator.md
 3. Check if projectname_master/00-master-index.md exists:
    → YES: read it. Resume from last incomplete step. Never redo completed work.
-   → NO:  derive projectname from repo root folder name. Create master index. Begin Step 1.
+   → NO:  derive projectname from the repo inside target/ (check target/.git
+          remote or package metadata — not the literal folder name "target").
+          Create master index. Begin Step 1.
 4. Read the methodology file for the current step before executing it.
 ```
 
