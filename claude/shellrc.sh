@@ -1,5 +1,22 @@
 # >>> vuln research functions >>>
 ACTIVE_ENGAGEMENT=""
+
+_research_launch() {
+    # $1 = session name, $2 = working dir, $3 = full prompt
+    local session=$1 dir=$2 prompt=$3
+    command -v tmux >/dev/null || { echo "[-] tmux not installed: apt install tmux"; return 1; }
+    if tmux has-session -t "$session" 2>/dev/null; then
+        echo "[!] tmux session '$session' already exists"
+        echo "    attach: tmux attach -t $session"
+        return 1
+    fi
+    tmux new-session -d -s "$session" -c "$dir"
+    tmux send-keys -t "$session" \
+        "IS_SANDBOX=1 claude --remote-control --model claude-opus-4-8 --dangerously-skip-permissions $(printf '%q' "$prompt")" Enter
+    echo "[+] launched in tmux session: $session"
+    echo "    attach: tmux attach -t $session    |    list: tmux ls"
+}
+
 vuln() {
     local repo=$1
     [[ -z "$repo" ]] && echo "usage: vuln <repo-url> [prompt]" && return 1
@@ -25,8 +42,9 @@ Check all findings against latest upstream — skip anything already patched. \
 Do chain analysis on every confirmed finding. \
 Complete all pipeline steps before stopping. \
 No menus, no questions, no narration."}"
-    IS_SANDBOX=1 claude --remote-control --model claude-opus-4-8 --dangerously-skip-permissions "$prompt"
+    _research_launch "${ts}-${name}" "$d" "$prompt"
 }
+
 engage() {
     local d=$(ls -dt ~/research/[0-9]*/ | fzf --prompt="engagement: ")
     [[ -z "$d" ]] && return 1
@@ -35,6 +53,7 @@ engage() {
     cd $d
     echo "[+] active: $d"
 }
+
 resume() {
     local d=$(cat ~/research/.active 2>/dev/null)
     [[ -z "$d" ]] && echo "[-] no active engagement — run engage first" && return 1
@@ -49,8 +68,9 @@ Do chain analysis on every confirmed finding. \
 Continue until all pipeline steps are complete. \
 No menus, no questions, no narration."}"
     echo "[+] resuming: $d"
-    IS_SANDBOX=1 claude --remote-control --model claude-opus-4-8 --dangerously-skip-permissions "$prompt"
+    _research_launch "$(basename "$d")" "$d" "$prompt"
 }
+
 report() {
     local vuln_id=$1
     [[ -z "$vuln_id" ]] && echo "usage: report VULN-001" && return 1
@@ -59,6 +79,6 @@ report() {
     echo "[*] reporting $vuln_id in $d"
     cd $d
     git init -q .
-    IS_SANDBOX=1 claude --remote-control --model claude-opus-4-8 --dangerously-skip-permissions "report $vuln_id"
+    _research_launch "$(basename "$d")-report" "$d" "report $vuln_id"
 }
 # <<< vuln research functions <
