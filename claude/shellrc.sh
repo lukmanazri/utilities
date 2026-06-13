@@ -25,7 +25,7 @@ Do chain analysis on every confirmed finding. \
 Complete all pipeline steps before stopping. \
 No menus, no questions, no narration."}"
     echo "/remote-control
-$prompt" | claude --model claude-opus-4-8 --dangerously-skip-permissions
+$prompt" | IS_SANDBOX=1 claude --model claude-opus-4-8 --dangerously-skip-permissions
 }
 engage() {
     local d=$(ls -dt ~/research/[0-9]*/ | fzf --prompt="engagement: ")
@@ -49,7 +49,7 @@ Continue until all pipeline steps are complete. \
 No menus, no questions, no narration."}"
     echo "[+] resuming: $d"
     echo "/remote-control
-$prompt" | claude --model claude-opus-4-8 --dangerously-skip-permissions
+$prompt" | IS_SANDBOX=1 claude --model claude-opus-4-8 --dangerously-skip-permissions
 }
 report() {
     local vuln_id=$1
@@ -59,6 +59,6 @@ report() {
     echo "[*] reporting $vuln_id in $d"
     cd $d
     echo "/remote-control
-report $vuln_id" | claude --model claude-opus-4-8 --dangerously-skip-permissions
+report $vuln_id" | IS_SANDBOX=1 claude --model claude-opus-4-8 --dangerously-skip-permissions
 }
 # <<< vuln research functions <
