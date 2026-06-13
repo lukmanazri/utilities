@@ -221,20 +221,20 @@ If available:
 opengrep --config "p/security-audit" --config "p/owasp-top-ten" target/ --json > projectname_master/opengrep-results.json 2>&1
 
 # Stack-specific
-opengrep --config "p/python" .       # if Python
-opengrep --config "p/javascript" .   # if JS/Node
-opengrep --config "p/typescript" .   # if TS
-opengrep --config "p/java" .         # if Java
-opengrep --config "p/go" .           # if Go
-opengrep --config "p/ruby" .         # if Ruby
-opengrep --config "p/php" .          # if PHP
+opengrep --config "p/python" target/       # if Python
+opengrep --config "p/javascript" target/   # if JS/Node
+opengrep --config "p/typescript" target/   # if TS
+opengrep --config "p/java" target/         # if Java
+opengrep --config "p/go" target/           # if Go
+opengrep --config "p/ruby" target/         # if Ruby
+opengrep --config "p/php" target/          # if PHP
 
 # Always
-opengrep --config "p/jwt" .
-opengrep --config "p/secrets" .
-opengrep --config "p/sql-injection" .
-opengrep --config "p/xss" .
-opengrep --config "p/command-injection" .
+opengrep --config "p/jwt" target/
+opengrep --config "p/secrets" target/
+opengrep --config "p/sql-injection" target/
+opengrep --config "p/xss" target/
+opengrep --config "p/command-injection" target/
 ```
 
 Triage every finding: ✅ TP | ❌ FP | ⚠️ Needs Review.
