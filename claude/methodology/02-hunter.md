@@ -218,7 +218,7 @@ If available:
 ```bash
 # Run relevant rulesets for detected stack
 # Security audit + OWASP always
-opengrep --config "p/security-audit" --config "p/owasp-top-ten" . --json > projectname_master/opengrep-results.json 2>&1
+opengrep --config "p/security-audit" --config "p/owasp-top-ten" target/ --json > projectname_master/opengrep-results.json 2>&1
 
 # Stack-specific
 opengrep --config "p/python" .       # if Python
@@ -244,9 +244,9 @@ Add every TP to master index Finding Lifecycle Tracker.
 
 ```bash
 which snyk 2>/dev/null
-snyk test --all-projects --json > projectname_master/snyk-deps-results.json 2>&1
-snyk code test --json > projectname_master/snyk-code-results.json 2>&1
-snyk iac test --json > projectname_master/snyk-iac-results.json 2>&1
+(cd target && snyk test --all-projects --json) > projectname_master/snyk-deps-results.json 2>&1
+(cd target && snyk code test --json) > projectname_master/snyk-code-results.json 2>&1
+(cd target && snyk iac test --json) > projectname_master/snyk-iac-results.json 2>&1
 ```
 
 Triage + add TPs to master index.
