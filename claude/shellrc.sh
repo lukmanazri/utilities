@@ -81,4 +81,18 @@ report() {
     git init -q .
     _research_launch "$(basename "$d")-report" "$d" "report $vuln_id"
 }
+
+pusheng() {
+    local d=$(cat ~/research/.active 2>/dev/null)
+    [[ -z "$d" ]] && echo "[-] no active engagement" && return 1
+    [[ ! -d "$d/.git" ]] && echo "[-] not a git repo" && return 1
+
+    cd "$d" || return 1
+
+    local msg="${*:-"checkpoint $(date '+%Y-%m-%d %H:%M:%S')"}"
+
+    git add .
+    git commit -m "$msg"
+    git push
+}
 # <<< vuln research functions <
