@@ -338,3 +338,15 @@ grep -rn "\.save(\|\.create(\|\.insert\|cache\.set\|session\[" . \
 **Guards fired:**
 **Master index updated:**
 ```
+
+---
+
+## SKILLS REFERENCE — G2/G7 CROSS-CHECK
+
+Before marking a vulnerability class as "not applicable" (G2) or "no CVE = safe"
+(G7), check `~/research/.claude/skills/reference/<category>/` for that class.
+Each file lists concrete technique variants. If a variant in the reference
+hasn't been tried against this codebase, try it before closing the class.
+
+Categories available: access-control, race-conditions, ssrf, deserialization,
+jwt, oauth, api-bola, source-scanning.
