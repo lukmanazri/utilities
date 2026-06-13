@@ -1,12 +1,11 @@
-# ~/.zshrc file for zsh interactive shells.
-# see /usr/share/doc/zsh/examples/zshrc for examples
+# >>> vuln research functions >>>
 ACTIVE_ENGAGEMENT=""
 vuln() {
     local repo=$1
     local name=$(basename $repo .git)
     local ts=$(date +%Y%m%d)
     local d=~/research/${ts}-${name}
-    local template=~/research/claude/v2
+    local template=~/research/.claude
     [[ ! -f "$template/CLAUDE.md" ]] && echo "[-] CLAUDE.md not found at $template" && return 1
     [[ ! -d "$template/methodology" ]] && echo "[-] methodology/ not found at $template" && return 1
     mkdir -p $d
@@ -61,3 +60,4 @@ report() {
     echo "/remote-control
 report $vuln_id" | claude --model claude-opus-4-8 --dangerously-skip-permissions
 }
+# <<< vuln research functions <
