@@ -36,6 +36,7 @@ vuln() {
     echo "$d" > ~/research/.active
     local prompt="${2:-"Read CLAUDE.md and begin from Step 1. \
 Priority targets: pre-auth RCE, ATO, auth bypass, PII exposure, privilege escalation — medium to critical only. \
+Especially hunt for chains landing in RCE: LFI to RCE, SSTI, deserialization, unrestricted file upload, code injection via eval/preg_replace, NoSQL \$where JS injection. Cross-reference skills/reference/<category>/ for variant techniques before closing any of these classes (G2/G7). \
 Spawn subagents aggressively — run independent hunting tracks and pipeline stages in parallel, not sequentially. Fan out as wide as the target warrants. \
 Run opengrep with rules at ~/tools/semgreprules/ alongside manual hunting — do not rely on opengrep alone. \
 Check all findings against latest upstream — skip anything already patched. \
@@ -60,6 +61,7 @@ resume() {
     cd "$d" || return 1
     local prompt="${1:-"Read CLAUDE.md and resume from current progress in 00-master-index.md. \
 Priority targets: pre-auth RCE, ATO, auth bypass, PII exposure, privilege escalation — medium to critical only. \
+Especially hunt for chains landing in RCE: LFI to RCE, SSTI, deserialization, unrestricted file upload, code injection via eval/preg_replace, NoSQL \$where JS injection. Cross-reference skills/reference/<category>/ for variant techniques before closing any of these classes (G2/G7). \
 Spawn subagents aggressively — run independent hunting tracks and pipeline stages in parallel, not sequentially. Fan out as wide as the remaining work warrants. \
 Run opengrep with rules at ~/tools/semgreprules/ alongside manual hunting — do not rely on opengrep alone. \
 Check all findings against latest upstream — skip anything already patched. \
