@@ -2,6 +2,7 @@
 ACTIVE_ENGAGEMENT=""
 vuln() {
     local repo=$1
+    [[ -z "$repo" ]] && echo "usage: vuln <repo-url> [prompt]" && return 1
     local name=$(basename $repo .git)
     local ts=$(date +%Y%m%d)
     local d=~/research/${ts}-${name}
