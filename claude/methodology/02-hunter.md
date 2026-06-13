@@ -349,4 +349,5 @@ Each file lists concrete technique variants. If a variant in the reference
 hasn't been tried against this codebase, try it before closing the class.
 
 Categories available: access-control, race-conditions, ssrf, deserialization,
+file-upload, code-injection, ssti, nosql-rce, path-traversal,
 jwt, oauth, api-bola, source-scanning.

@@ -49,3 +49,25 @@ WHAT; traffic informs HOW; PATT informs WHAT VARIANTS EXIST.
 Generates and syntax-validates (never executes) supporting PoC tooling —
 multi-target scanners, OOB listeners, concurrent setup scripts. Use when
 exploit.py/setup.py would exceed ~30 lines or need concurrency.
+
+## reference/path-traversal/
+Traversal payloads and encoding tricks, filter bypass techniques, LFI→RCE
+chains (log poisoning, session file inclusion, PHP wrappers), Jupyter
+nbconvert LFI→RCE, platform-specific quirks, common target files.
+
+## reference/file-upload/
+Extension and content-type bypass, magic-byte/polyglot files, web-shell
+payloads, upload race conditions — primary RCE vector via arbitrary file write.
+
+## reference/code-injection/
+Direct code-execution via language eval/exec — Python eval/format-string,
+PHP preg_replace /e modifier, bash symbolic-only command construction.
+
+## reference/ssti/
+Server-side template injection — engine detection, bypass techniques,
+quote-free/double-render bypass. SSTI is one of the most direct RCE paths
+in templated frameworks (Jinja2, Django templates, etc).
+
+## reference/nosql-rce/
+MongoDB $where JS-injection (RCE via eval-equivalent), Redis SSRF-to-RCE
+via gopher protocol.
