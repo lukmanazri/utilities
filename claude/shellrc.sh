@@ -29,7 +29,7 @@ vuln() {
     mkdir -p "$d"
     cp "$template/CLAUDE.md" "$d/"
     cp -r "$template/methodology" "$d/"
-    cp -r "$template/skills" "$d/" 
+    cp -r "$template/skills" "$d/" 2>/dev/null || true
     cd "$d" || return 1
     git init -q .
     git clone "$repo" target >/dev/null 2>&1
