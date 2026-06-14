@@ -27,13 +27,15 @@ _setup_research() {
     echo "[+] shell: $SH  ->  $RC"
 
     # 2. copy template files + dirs into ~/research/.claude
-    [ -f "$SCRIPT_DIR/CLAUDE.md" ]    || { echo "[-] CLAUDE.md missing in $SCRIPT_DIR"; return 1; }
-    [ -d "$SCRIPT_DIR/methodology" ]  || { echo "[-] methodology/ missing in $SCRIPT_DIR"; return 1; }
-    [ -f "$SCRIPT_DIR/shellrc.sh" ]   || { echo "[-] shellrc.sh missing in $SCRIPT_DIR"; return 1; }
+    [ -f "$SCRIPT_DIR/CLAUDE.md" ]   || { echo "[-] CLAUDE.md missing in $SCRIPT_DIR"; return 1; }
+    [ -d "$SCRIPT_DIR/methodology" ] || { echo "[-] methodology/ missing in $SCRIPT_DIR"; return 1; }
+    [ -f "$SCRIPT_DIR/shellrc.sh" ]  || { echo "[-] shellrc.sh missing in $SCRIPT_DIR"; return 1; }
 
     mkdir -p "$CLAUDE_DIR"
     cp "$SCRIPT_DIR/CLAUDE.md" "$CLAUDE_DIR/CLAUDE.md"
     cp -r "$SCRIPT_DIR/methodology" "$CLAUDE_DIR/"
+    [[ -d "$SCRIPT_DIR/skills" ]] && cp -r "$SCRIPT_DIR/skills" "$CLAUDE_DIR/" \
+        && echo "[+] skills installed -> $CLAUDE_DIR/skills"
     echo "[+] template installed -> $CLAUDE_DIR"
 
     # 3. append functions to rc (idempotent via marker)
