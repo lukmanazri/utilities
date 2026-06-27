@@ -6,7 +6,10 @@
 
 ## HUNTER JOB
 
-Your job is breadth, not depth. Cover every attack surface the Mapper found.
+Your job is breadth, not depth. Cover every attack surface — but you no longer hunt blind.
+Analyst (Step 1.5) has already understood the code and handed you `comprehension/`. You hunt
+from understanding, not from grep coincidences.
+
 - Authentication flows
 - Authorization and access control
 - Business logic
@@ -17,6 +20,48 @@ For every suspected weakness: add a provisional finding to the master index. Mar
 Do NOT trace taint paths — that is Tracer's job.
 Do NOT write POCs — that is Exploiter's job.
 Your output is a complete, prioritized list of suspicions with enough evidence for Tracer to pick up.
+
+---
+
+## ENTRY GATE — G9 (read before anything else)
+
+1. Read `comprehension/coverage.md`. **You may only hunt subsystems marked `✅ Understood`.**
+   Any subsystem marked `⚠️ Comprehension Blocked` is off-limits — leave it for the
+   researcher; do not hunt code Analyst could not understand.
+2. Read `comprehension/invariants.md` — this is your **ranked lead list**. Hunting starts
+   here, top-down. Each unenforced/partially-enforced invariant protecting a high-value
+   resource is a hypothesis to confirm.
+3. Read `comprehension/trust-boundaries.md` and `comprehension/evolution.md` for additional
+   leads (under-validated boundaries; historical anti-patterns likely to recur).
+
+If `comprehension/` does not exist or coverage is empty → STOP. Analyst has not run. Do not
+proceed. (G9)
+
+---
+
+## HOW TO HUNT — HYPOTHESIS-DRIVEN, NOT GREP-SPRAY
+
+The grep commands in this file are **confirmation tools, not discovery methods.** The old
+failure mode was: grep `cursor.execute`, eyeball results, hope. That produces shallow,
+coincidental findings. Instead:
+
+```
+1. Take an invariant from comprehension/invariants.md (e.g. INV-001: "order_id belongs to
+   session.user" — enforced? No).
+2. Form the hypothesis: "GET /orders/{id} returns any user's order regardless of session."
+3. Use grep / code reading to CONFIRM the hypothesis against the actual code path Analyst
+   already traced (you already know where it lives — invariants.md has the file:line).
+4. If confirmed → provisional finding, citing the invariant it violates.
+5. If the invariant turns out enforced after all → document that in the invariant row,
+   move to the next lead.
+```
+
+**Every provisional finding MUST cite the invariant or trust boundary it violates.** A
+finding with no invariant/boundary reference is a grep coincidence — re-derive it from
+comprehension or drop it. This is the single rule that turns Hunter from shallow to sharp.
+
+The grep blocks below remain — use them to (a) confirm hypotheses fast, and (b) catch any
+sink instance Analyst's scope might have under-weighted. They are not your starting point.
 
 ---
 
@@ -307,6 +352,7 @@ grep -rn "\.save(\|\.create(\|\.insert\|cache\.set\|session\[" . \
 - **Endpoint:**
 - **Issue:**
 - **File:Line:**
+- **Violates invariant:** INV-XXX (from comprehension/invariants.md) / trust boundary ref
 - **Impact:**
 - **Provisional Vuln ID:** (assigned in master index)
 
