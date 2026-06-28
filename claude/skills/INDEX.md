@@ -1,8 +1,22 @@
 # Skills Reference Index
 
-Technique reference library for Hunter/Exploiter. Consult these before
-declaring a vulnerability class exhausted (G2/G7) or when constructing
+Technique reference library + callable SERVICES for the pipeline. Consult the reference
+sections before declaring a vulnerability class exhausted (G2/G7) or when constructing
 payloads (P4).
+
+> **Path convention:** skills are copied into each engagement dir at launch, so all stages
+> reference them ENGAGEMENT-RELATIVE as `skills/...` (never `~/research/.claude/skills/...`,
+> which is the template, not the running copy).
+>
+> **patt-fetcher and script-generator are SERVICES** (re-entrant, bounded, callable from inside
+> a stage — not pipeline stages). See CLAUDE.md § services. patt-fetcher runs on Haiku;
+> script-generator on Sonnet.
+>
+> **Chaining scope decision (WP-14):** this library is APPLICATION-LAYER. There is no `system/`
+> (OS privesc / pivot) or `web-app-logic/` tree vendored here. The Chain Strategist (Step 5.5)
+> is therefore scoped to app-layer chains; a chain needing an OS-level/pivot primitive is
+> recorded as a Researcher Action, not invented. If those trees are later vendored, widen the
+> Strategist's scope and add them below.
 
 ## reference/access-control/
 IDOR (read + action), mass assignment, multi-step bypass, parameter-based
