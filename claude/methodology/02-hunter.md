@@ -1,6 +1,7 @@
 # Agent: Hunter
 > Responsibility: Find every suspected vulnerability. Do not prove them — that is Tracer's job.
 > Output: projectname_master/02-hunter.md
+> Model: Sonnet (parallel breadth — independent tracks + recall sweep)
 
 ---
 
@@ -20,6 +21,24 @@ For every suspected weakness: add a provisional finding to the master index. Mar
 Do NOT trace taint paths — that is Tracer's job.
 Do NOT write POCs — that is Exploiter's job.
 Your output is a complete, prioritized list of suspicions with enough evidence for Tracer to pick up.
+
+**Every provisional finding records (provisionally — Exploiter makes them precise later):**
+- **Precondition-Privilege (P):** what privilege the attack assumes — unauth / user / role-X / admin.
+- **Capability-granted (C):** what it yields — rce / file-read / cross-tenant-read / privesc→X / data-dump.
+These two fields are mandatory: the Chain Strategist builds the chain graph from them, and the
+triager runs the marginal-capability test on them. Use the privilege tiers from
+`comprehension/security-model.md`.
+
+**Two complementary passes (depth AND recall):**
+1. **Hypothesis-driven** (primary) — hunt the invariants top-down (§ HOW TO HUNT).
+2. **Recall sweep** (mandatory, § H6) — an unconstrained sink/SAST pass so depth-gating never
+   hides low-hanging fruit. A finding it surfaces with no matching invariant → ADD the invariant
+   back to `comprehension/invariants.md` (it is BIDIRECTIONAL — Analyst seeds, you enrich).
+
+**State discipline:** if you fan out independent tracks (auth / logic / scanning) as parallel
+subagents, each subagent writes only its OWN track notes; the Hunter stage agent is the SOLE
+writer that merges findings into the master index and into `invariants.md` after they finish
+(CLAUDE.md § STATE DISCIPLINE). Never let two tracks write the index concurrently.
 
 ---
 
@@ -261,29 +280,27 @@ If not available: add to Researcher Actions Required. Do not block — continue 
 
 If available:
 ```bash
-# Run relevant rulesets for detected stack
-# Security audit + OWASP always
-opengrep --config "p/security-audit" --config "p/owasp-top-ten" target/ --json > projectname_master/opengrep-results.json 2>&1
+# PRIMARY: run against the vendored local ruleset (matches the launch preprompt).
+# opengrep (the fork) does NOT reliably resolve Semgrep's `p/...` registry shorthand —
+# that is a Semgrep Inc. hosted service. Vendor the packs you want into ~/tools/semgreprules/
+# once, then point opengrep at the local directory:
+opengrep --config ~/tools/semgreprules/ target/ --json > projectname_master/opengrep-results.json 2>&1
 
-# Stack-specific
-opengrep --config "p/python" target/       # if Python
-opengrep --config "p/javascript" target/   # if JS/Node
-opengrep --config "p/typescript" target/   # if TS
-opengrep --config "p/java" target/         # if Java
-opengrep --config "p/go" target/           # if Go
-opengrep --config "p/ruby" target/         # if Ruby
-opengrep --config "p/php" target/          # if PHP
-
-# Always
-opengrep --config "p/jwt" target/
-opengrep --config "p/secrets" target/
-opengrep --config "p/sql-injection" target/
-opengrep --config "p/xss" target/
-opengrep --config "p/command-injection" target/
+# If your opengrep build DOES resolve the registry, these are the categories to cover
+# (otherwise use them as the list of packs to vendor into ~/tools/semgreprules/):
+#   always: security-audit, owasp-top-ten, jwt, secrets, sql-injection, xss, command-injection
+#   stack:  python | javascript | typescript | java | go | ruby | php  (match detected stack)
+# Example registry form (only if supported by your build):
+#   opengrep --config "p/security-audit" --config "p/owasp-top-ten" target/
 ```
 
 Triage every finding: ✅ TP | ❌ FP | ⚠️ Needs Review.
 Add every TP to master index Finding Lifecycle Tracker.
+
+**SAST is an INDEPENDENT recall channel.** Every true positive is a finding regardless of
+whether comprehension predicted it. If a TP has no matching invariant in
+`comprehension/invariants.md`, that is a comprehension gap — ADD the invariant back (source=Hunter)
+and file the finding. Never discard a real SAST hit just because the hypothesis pass missed it.
 
 ### 5.B — Snyk CLI
 
@@ -323,6 +340,49 @@ grep -rn "\.save(\|\.create(\|\.insert\|cache\.set\|session\[" . \
 
 ---
 
+## H6 — RECALL SWEEP (mandatory — don't miss low-hanging fruit)
+
+The hypothesis-driven pass is sharp but can only find bugs behind invariants Analyst already
+wrote down. Depth must never cost recall. After the hypothesis pass, run an UNCONSTRAINED
+sweep over all `✅ Understood` subsystems:
+
+1. **Sink sweep** — the grep blocks in H1–H5 + H5.C blind-spots, run broadly (not tied to a
+   specific invariant). Classic sinks: query exec, command exec, deserialize, template render,
+   file path join, redirect, SSRF-able HTTP client, eval/reflection.
+2. **SAST channel** — H5 results, treated independently (every TP is a finding).
+3. **Low-hanging classics** — default creds, debug endpoints, verbose errors, missing authz on
+   a single route, open redirect, exposed actuator/admin, secrets in responses.
+
+**The bidirectional rule (this is what keeps the lead list honest):** for anything the sweep
+surfaces that has NO matching invariant in `comprehension/invariants.md`:
+- ADD the invariant back to invariants.md (mark `Source: Hunter`), and
+- file the provisional finding with its P/C and the new invariant ref.
+
+So the lead list grows during hunting instead of being a one-shot bottleneck. A finding is
+allowed to exist without a *pre-existing* invariant — but not without *an* invariant; if it's
+real, name the assumption it violates and record it. Coverage stays whitebox-honest, recall
+stays high.
+
+> Scope note: the sweep still respects G9 — it sweeps only `✅ Understood` subsystems. If the
+> sweep wants to reach an uncomprehended subsystem, request Analyst SERVICE MODE for that one
+> subsystem first, then sweep it.
+
+---
+
+## EXIT GATE / DONE-WHEN — you have NOT finished until ALL true
+
+- [ ] Every `✅ Understood` subsystem hunted via the hypothesis pass (invariants top-down)
+- [ ] Recall sweep (H6) run over all `✅ Understood` subsystems
+- [ ] SAST channel run (or skip documented); every TP filed
+- [ ] Every provisional finding has: invariant ref (or +new added back), P, and C
+- [ ] Every finding in the master index Finding Lifecycle Tracker, marked `⏳ Pending`
+- [ ] Skills reference checked for untried variants before closing any class (G2/G7)
+- [ ] Index lint passed
+
+Breadth without the recall sweep is not done. Missing any item = not done.
+
+---
+
 ## HUNTER OUTPUT FILE STRUCTURE
 
 ```markdown
@@ -352,9 +412,16 @@ grep -rn "\.save(\|\.create(\|\.insert\|cache\.set\|session\[" . \
 - **Endpoint:**
 - **Issue:**
 - **File:Line:**
-- **Violates invariant:** INV-XXX (from comprehension/invariants.md) / trust boundary ref
+- **Violates invariant:** INV-XXX (from comprehension/invariants.md) / trust boundary ref / "+new" if added back
+- **Precondition-Privilege (P):** unauth / user / role-X / admin
+- **Capability-granted (C):** rce / file-read / cross-tenant-read / privesc→X / data-dump
 - **Impact:**
 - **Provisional Vuln ID:** (assigned in master index)
+<!-- All finding types (BAC/LOGIC/LIB/scan) carry Violates-invariant + P + C. -->
+
+## Progress addition
+- [ ] Recall sweep (H6) run over all ✅ Understood subsystems
+- [ ] Every recall-sweep finding with no prior invariant added one back (bidirectional)
 
 ## Logic Flaws
 ### [LOGIC-001]
@@ -390,10 +457,24 @@ grep -rn "\.save(\|\.create(\|\.insert\|cache\.set\|session\[" . \
 ## SKILLS REFERENCE — G2/G7 CROSS-CHECK
 
 Before marking a vulnerability class as "not applicable" (G2) or "no CVE = safe"
-(G7), check `~/research/.claude/skills/reference/<category>/` for that class.
-Each file lists concrete technique variants. If a variant in the reference
-hasn't been tried against this codebase, try it before closing the class.
+(G7), check `skills/reference/<category>/` (engagement-relative — skills are copied
+into the engagement dir at launch) for that class. Each file lists concrete technique
+variants. If a variant in the reference hasn't been tried against this codebase, try
+it before closing the class.
 
 Categories available: access-control, race-conditions, ssrf, deserialization,
 file-upload, code-injection, ssti, nosql-rce, path-traversal,
 jwt, oauth, api-bola, source-scanning.
+
+---
+
+## HUNTER ANTI-PATTERNS (do not do these)
+
+- Do NOT trace taint paths or write POCs — you surface suspicions; Tracer proves, Exploiter exploits
+- Do NOT hunt subsystems not marked `✅ Understood` — request Analyst SERVICE MODE instead (G9)
+- Do NOT file a finding with no invariant/boundary ref — if real, add the invariant back (bidirectional); else drop it
+- Do NOT skip the recall sweep (H6) — depth-first must never mean breadth-skipped
+- Do NOT discard a real SAST hit because the hypothesis pass missed it — every TP is a finding
+- Do NOT omit P (precondition-privilege) and C (capability) — the Strategist and triager need them
+- Do NOT use grep as your discovery method — it confirms hypotheses and feeds the recall sweep, nothing more
+- Do NOT close a vuln class without checking the skills reference for untried variants (G2/G7)
