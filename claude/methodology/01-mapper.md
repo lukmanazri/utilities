@@ -1,6 +1,7 @@
 # Agent: Mapper
 > Responsibility: Know what the application IS before any hunting begins.
 > Output: projectname_master/01-mapper.md
+> Model: Sonnet (breadth enumeration — many files, shallow per file)
 
 ---
 
@@ -15,9 +16,17 @@ Nothing else. Do not start hunting. Do not start analyzing auth. That is Hunter'
 Deep understanding is the next stage's job (Analyst, Step 1.5). Your output is the
 foundation Analyst builds comprehension on; completeness here saves everyone.
 
+### ENTRY GATE — do not start until ALL true
+- [ ] `target/` exists and is a cloned repo (git remote or package metadata derivable)
+- [ ] Docker / runtime tooling available to bring up a local instance
+- [ ] `00-master-index.md` created (or you are creating it as the first stage)
+
+(Mapper is the first stage — its entry gate is minimal by design.)
+
 ### EXIT GATE / DONE-WHEN — you have NOT finished until ALL true
 - [ ] Tech stack table populated (versions from config files, not guesses)
 - [ ] Attack Surface Map populated in master index (every entry point, with auth + params)
+- [ ] ALL entry-point classes enumerated, not just HTTP: webhooks, queue/message consumers, CLI/IPC, scheduled/background jobs, AND second-order sources (data written by one request, read/rendered/executed by another). A missed source → uncomprehended → unhunted → **invisible**. This is the #1 recall hole.
 - [ ] Config & secrets documented
 - [ ] Module map written (which module handles what)
 - [ ] Local instance running, health-checked, Burp-proxied, confirmed in master index
@@ -87,6 +96,17 @@ grep -rn "open(\|readFile\|fs\.read\|ioutil\.Read\|os\.Open" . | grep -v node_mo
 grep -rn "webhook\|consumer\|subscribe\|queue\|rabbit\|kafka\|celery\|sidekiq\|resque" . \
   --include="*.py" --include="*.js" --include="*.ts" --include="*.rb" | grep -v node_modules | head -20
 ```
+
+**Scheduled / background jobs:**
+```bash
+grep -rn "cron\|schedule\|@scheduled\|setInterval\|BackgroundTasks\|perform_later\|enqueue\|@app.task\|@shared_task" . | grep -v node_modules | head -20
+```
+
+**Second-order sources (classic blind spot — note them, don't grep blindly):** identify places
+where data written by one entry point is later read, rendered, or executed by another (stored
+profile fields, filenames, config rows, cached values). Record BOTH ends — the writer endpoint
+AND the consumer/sink — because the taint crosses requests and is invisible to single-request
+analysis. Flag these for Analyst so the relevant subsystems get comprehended.
 
 For each entry point, record:
 - URL pattern / CLI invocation
