@@ -62,11 +62,11 @@ vuln() {
     local prompt="${2:-"Read CLAUDE.md and begin from Step 1. \
 Priority targets: pre-auth RCE, ATO, auth bypass, PII exposure, privilege escalation — medium to critical only. \
 Especially hunt for chains landing in RCE: LFI to RCE, SSTI, deserialization, unrestricted file upload, code injection via eval/preg_replace, NoSQL \$where JS injection. Cross-reference skills/reference/<category>/ for variant techniques before closing any of these classes (G2/G7). \
-Spawn subagents aggressively — run independent hunting tracks and pipeline stages in parallel, not sequentially. Fan out as wide as the target warrants. \
-Step 1.5 (Analyst) is MANDATORY and gated: deeply understand every security-load-bearing subsystem and pass the teach-back BEFORE any hunting (G9). Spend tokens here — depth of comprehension is the priority, not speed. Hunt only from comprehension/invariants.md; every finding must cite the invariant it violates. \
-Run opengrep with rules at ~/tools/semgreprules/ alongside manual hunting — do not rely on opengrep alone. \
+Spawn subagents aggressively, but FAN OUT WITHIN A STAGE — never run stages that depend on each other in parallel (Hunter needs Analyst; Tracer needs Hunter's findings; Chain Strategist needs confirmed findings). Within a stage, fan out as wide as the target warrants. Spawn each subagent on its role's model per CLAUDE.md MODEL ASSIGNMENT (breadth→Sonnet, judgment→Opus, fetch→Haiku) — do not default breadth work to Opus. \
+Step 1.5 (Analyst) is MANDATORY and gated: deeply understand every security-load-bearing subsystem and pass the teach-back BEFORE any hunting (G9). Spend tokens here — depth of comprehension is the priority, not speed. Hunt only from comprehension/invariants.md; every finding cites the invariant it violates (add one back if the recall sweep finds something new). \
+Run opengrep with the vendored rules at ~/tools/semgreprules/ alongside manual hunting — do not rely on opengrep alone. \
 Check all findings against latest upstream — skip anything already patched. \
-Do chain analysis on every confirmed finding. \
+Chain analysis runs as a dedicated stage (5.5 Chain Strategist) over all confirmed findings; the matured triage (Final Boss, G10) judges significance before any downgrade. \
 Complete all pipeline steps before stopping. \
 No menus, no questions, no narration."}"
     _research_launch "${ts}-${name}" "$d" "$prompt"
@@ -88,11 +88,11 @@ resume() {
     local prompt="${1:-"Read CLAUDE.md and resume from current progress in 00-master-index.md. \
 Priority targets: pre-auth RCE, ATO, auth bypass, PII exposure, privilege escalation — medium to critical only. \
 Especially hunt for chains landing in RCE: LFI to RCE, SSTI, deserialization, unrestricted file upload, code injection via eval/preg_replace, NoSQL \$where JS injection. Cross-reference skills/reference/<category>/ for variant techniques before closing any of these classes (G2/G7). \
-Spawn subagents aggressively — run independent hunting tracks and pipeline stages in parallel, not sequentially. Fan out as wide as the remaining work warrants. \
-Step 1.5 (Analyst) is MANDATORY and gated: deeply understand every security-load-bearing subsystem and pass the teach-back BEFORE any hunting (G9). Spend tokens here — depth of comprehension is the priority, not speed. Hunt only from comprehension/invariants.md; every finding must cite the invariant it violates. \
-Run opengrep with rules at ~/tools/semgreprules/ alongside manual hunting — do not rely on opengrep alone. \
+Spawn subagents aggressively, but FAN OUT WITHIN A STAGE — never run stages that depend on each other in parallel (Hunter needs Analyst; Tracer needs Hunter's findings; Chain Strategist needs confirmed findings). Within a stage, fan out as wide as the remaining work warrants. Spawn each subagent on its role's model per CLAUDE.md MODEL ASSIGNMENT (breadth→Sonnet, judgment→Opus, fetch→Haiku) — do not default breadth work to Opus. \
+Step 1.5 (Analyst) is MANDATORY and gated: deeply understand every security-load-bearing subsystem and pass the teach-back BEFORE any hunting (G9). Spend tokens here — depth of comprehension is the priority, not speed. Hunt only from comprehension/invariants.md; every finding cites the invariant it violates (add one back if the recall sweep finds something new). \
+Run opengrep with the vendored rules at ~/tools/semgreprules/ alongside manual hunting — do not rely on opengrep alone. \
 Check all findings against latest upstream — skip anything already patched. \
-Do chain analysis on every confirmed finding. \
+Chain analysis runs as a dedicated stage (5.5 Chain Strategist) over all confirmed findings; the matured triage (Final Boss, G10) judges significance before any downgrade. \
 Continue until all pipeline steps are complete. \
 No menus, no questions, no narration."}"
     echo "[+] resuming: $d"
@@ -106,7 +106,10 @@ report() {
     d=$(cat ~/research/.active 2>/dev/null)
     [[ -z "$d" ]] && echo "[-] no active engagement" && return 1
     cd "$d" || return 1
-    _research_launch "$(basename "$d")-report" "$d" "report $vuln_id"
+    local prompt="Generate a finding report for $vuln_id from 00-master-index.md and FINDINGS.md Part 1. \
+Include: Precondition-Privilege → Capability (P→C); the Boundary Verdict and its tripwire if downgraded (G10); chain membership from § Chain Graph; the taint-path summary; and the captured oracle evidence from the POC folder. \
+No narration, no questions."
+    _research_launch "$(basename "$d")-report" "$d" "$prompt"
 }
 pusheng() {
     local d
